@@ -1,0 +1,62 @@
+from urllib.request import urlopen as URLReq
+from bs4 import BeautifulSoup as soup
+from datetime import datetime
+import csv
+
+MSW = "https://magicseaweed.com/Lahinch-Beach-Surf-Report/52/"
+
+# open connection, grab page
+uClient = URLReq(MSW)
+page_html = uClient.read()
+uClient.close()
+
+# html parsing
+page_soup = soup(page_html, "html.parser")
+
+# Extract the specific table
+containers = page_soup.findAll("table", {"class": "table table-sm table-striped table-inverse table-tide"})
+times_str = containers[15].text
+
+# Remove whitespace at start and end
+times_str = times_str.strip()  # rm whitespace
+
+# Replace the new field delimiter
+times_str = times_str.replace("  ", ",")
+times_list = times_str.split(',')
+
+'''
+Come back to separate the headers from the data with a /2 loop, so you can search for where header = sunrise
+ and soft code the data extraction with a var
+'''
+
+# Write to .csv
+with open("C:\\Users\\marki\\PycharmProjects\\curtainWinder\\sunTimeTable.csv", mode="w+", newline='\n') as TimesCSV:
+    writer = csv.writer(TimesCSV, delimiter=',')
+    writer.writerow(times_str)
+
+# Convert to time (and, if applicable, add offset for Jun, Jul, Aug, Nov, Dec, Jan)
+sunrise = datetime.strptime(times_list[3], '%I:%M%p').time()  # create a time object from str of sunrise (element 3)
+sunset = datetime.strptime(times_list[5], '%I:%M%p').time()
+
+print("Sunrise today is at: ", sunrise.strftime('%I:%M%p'))  # print each time in preferred format
+print("Sunset today is at:  ", sunset.strftime('%I:%M%p'))
+
+'''
+Up to this point is how we can pull sunrise info from a site and
+Below is an Application specific way of using this wscraped data in the real world,
+which can be replaced with anything you want to automate to the solar cycle
+'''
+
+if sunrise < datetime.now().time() < sunset:  # if sun is up, open the curtains
+    print("\n\tthe sun is up")
+   # openCurtains()
+    curtainClosed = False
+
+else:
+    print("\n\tthe sun is down")
+  # closeCurtains()
+    curtainClosed = True
+
+# closeCurtains() # define above or add __main__ and __init__
+
+# openCurtains()
